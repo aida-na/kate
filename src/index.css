@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+:root {
+  --sage:        #eef0eb;
+  --surface:     #ffffff;
+  --border:      #dde0d8;
+  --text:        #1e2a1a;
+  --muted:       #6b7d66;
+  --faint:       #9aa895;
+  --green:       #4a8a5c;
+  --amber:       #c07838;
+  --red:         #b54444;
+  --blue:        #4a72a0;
+  --accent:      #5a7a5a;
+}
+
+body {
+  background: var(--sage);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  margin: 0;
+}
+
+* { box-sizing: border-box; }
+
+/* Horizontally scrollable tab strip — hide scrollbar visually */
+.tab-strip {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tab-strip::-webkit-scrollbar { display: none; }
