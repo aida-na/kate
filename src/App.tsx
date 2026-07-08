@@ -214,13 +214,6 @@ function StatusDot({ s, size = 7 }: { s: MarkerStatus; size?: number }) {
   );
 }
 
-function SegBar({ pct, color }: { pct: number; color: string }) {
-  return (
-    <div style={{ background: "#e8ebe4", borderRadius: 99, height: 5, width: "100%", overflow: "hidden" }}>
-      <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 99, transition: "width .4s ease" }} />
-    </div>
-  );
-}
 
 function ChartDesc({ text }: { text: string }) {
   return (
@@ -234,48 +227,48 @@ type TabId = "overview" | "recs" | "lifestyle" | "trends" | "markers";
 
 // ─── System accordion ─────────────────────────────────────────────────────────
 
-const SYS_COLOR: Record<string, { accent: string; bg: string; border: string }> = {
-  red:   { accent: "var(--red)",   bg: "#fdf0f0", border: "#f5c0b8" },
-  amber: { accent: "var(--amber)", bg: "#fdf8ee", border: "#f0d89a" },
-  green: { accent: "var(--green)", bg: "#f2f8f2", border: "#bde0be" },
+const SYS_ACCENT: Record<string, string> = {
+  red:   "var(--red)",
+  amber: "var(--amber)",
+  green: "var(--green)",
 };
 
 function SystemAccordion() {
-  const [open, setOpen] = useState<Record<string, boolean>>({ autoimmune: true });
+  const allOpen = Object.fromEntries(SYSTEMS.map((s) => [s.id, true]));
+  const [open, setOpen] = useState<Record<string, boolean>>(allOpen);
   const toggle = (id: string) => setOpen((o) => ({ ...o, [id]: !o[id] }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {SYSTEMS.map((sys) => {
-        const { accent, bg, border } = SYS_COLOR[sys.alertColor];
+        const accent = SYS_ACCENT[sys.alertColor];
         const counts = { bad: 0, warn: 0, ok: 0 };
         for (const mk of sys.markers) counts[mk.status as "bad" | "warn" | "ok"]++;
         const isOpen = !!open[sys.id];
         return (
           <div key={sys.id} style={{
-            background: isOpen ? bg : "var(--surface)",
-            border: `1px solid ${isOpen ? border : "var(--border)"}`,
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
             borderLeft: `3px solid ${accent}`,
             borderRadius: 8, overflow: "hidden",
-            transition: "background .15s, border-color .15s",
           }}>
             <button onClick={() => toggle(sys.id)} style={{
               width: "100%", display: "flex", alignItems: "center", gap: 8,
               padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left",
             }}>
-              <span style={{ fontSize: 11, color: accent, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block", flexShrink: 0 }}>›</span>
-              <span style={{ fontSize: 13, fontWeight: 700, flex: 1, color: "var(--text)" }}>{sys.label}</span>
+              <span style={{ fontSize: 11, color: "var(--faint)", transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block", flexShrink: 0 }}>›</span>
+              <span style={{ fontSize: 13, fontWeight: 600, flex: 1, color: "var(--text)" }}>{sys.label}</span>
               {/* Dot counts */}
               <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 {counts.bad  > 0 && <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--red)"   }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--red)",   flexShrink: 0 }} />{counts.bad}</span>}
                 {counts.warn > 0 && <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--amber)" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--amber)", flexShrink: 0 }} />{counts.warn}</span>}
-                {counts.ok   > 0 && <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--green)" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", flexShrink: 0 }} />{counts.ok}</span>}
+                {counts.ok   > 0 && <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--faint)"  }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--faint)",  flexShrink: 0 }} />{counts.ok}</span>}
               </div>
-              <span style={{ fontSize: 10, fontWeight: 600, color: accent, marginLeft: 6, flexShrink: 0 }}>{sys.alert}</span>
+              <span style={{ fontSize: 10, fontWeight: 500, color: "var(--muted)", marginLeft: 6, flexShrink: 0 }}>{sys.alert}</span>
             </button>
 
             {isOpen && (
-              <div style={{ padding: "4px 14px 12px 30px", borderTop: `1px solid ${border}`, display: "flex", flexDirection: "column", gap: 7 }}>
+              <div style={{ padding: "4px 14px 12px 30px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 7 }}>
                 {sys.markers.map(({ label, value, trend, status, note }) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <StatusDot s={status} />
@@ -474,12 +467,14 @@ function OverviewTab() {
       {/* Lab summary card */}
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: m ? "14px" : "16px 18px" }}>
 
-        {/* Header: title + range summary */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        {/* Header: title + range summary + treatment adherence — all inline */}
+        <div style={{ display: "flex", alignItems: "center", gap: m ? 8 : 16, marginBottom: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>
             Lab Results Summary
           </div>
-          <div style={{ display: "flex", gap: m ? 8 : 12, marginLeft: "auto", flexWrap: "wrap" }}>
+
+          {/* Range pills */}
+          <div style={{ display: "flex", gap: m ? 8 : 10, flexWrap: "wrap" }}>
             {([
               { label: "In range"     as RangeKey, pct: 55, color: "var(--green)" },
               { label: "Borderline"   as RangeKey, pct: 24, color: "var(--amber)" },
@@ -499,34 +494,27 @@ function OverviewTab() {
               );
             })}
           </div>
+
+          {/* Divider */}
+          {!m && <div style={{ width: 1, height: 14, background: "var(--border)", flexShrink: 0 }} />}
+
+          {/* Treatment adherence — inline percentage pills */}
+          <div style={{ display: "flex", gap: m ? 8 : 10, flexWrap: "wrap", marginLeft: m ? 0 : "auto" }}>
+            {([
+              { name: "Hydroxychloroquine", short: "HCQ", pct: 92, note: "Daily antimalarial and immunomodulator. Reduces autoantibody production, complement consumption, and cardiovascular risk in lupus. Also reduces antiphospholipid antibody levels over time." },
+              { name: "Escitalopram",       short: "Esc", pct: 88, note: "Daily SSRI antidepressant. Relevant to monitoring: SSRIs can cause SIADH (low sodium). Borderline sodium of 135 mmol/L warrants ongoing monitoring." },
+            ] as const).map(({ name, short, pct, note }) => (
+              <span key={name} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>{m ? short : name}</span>
+                <InfoTooltip text={note} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>{pct}%</span>
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Unified system accordion */}
         <SystemAccordion />
-
-        {/* Treatment Adherence — compact row below accordion */}
-        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
-            Treatment Adherence
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 10 }}>
-            {([
-              { name: "Hydroxychloroquine", pct: 92, note: "Daily antimalarial and immunomodulator. Reduces autoantibody production, complement consumption, and cardiovascular risk in lupus. Also reduces antiphospholipid antibody levels over time." },
-              { name: "Escitalopram",        pct: 88, note: "Daily SSRI antidepressant. Relevant to monitoring: SSRIs can cause SIADH (low sodium). Borderline sodium of 135 mmol/L warrants ongoing monitoring." },
-            ] as const).map(({ name, pct, note }) => (
-              <div key={name}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <span style={{ fontSize: 12, color: "var(--muted)" }}>{name}</span>
-                    <InfoTooltip text={note} />
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>{pct}%</span>
-                </div>
-                <SegBar pct={pct} color="var(--accent)" />
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Range detail panel */}
@@ -534,15 +522,11 @@ function OverviewTab() {
         const COLOR_MAP: Record<RangeKey, string> = {
           "In range": "var(--green)", "Borderline": "var(--amber)", "Out of range": "var(--red)",
         };
-        const BG_MAP: Record<RangeKey, string> = {
-          "In range": "#eef6ef", "Borderline": "#fdf5ec", "Out of range": "#fdf0f0",
-        };
-        const color = COLOR_MAP[activeRange];
-        const bg = BG_MAP[activeRange];
         const items = RANGE_DETAILS[activeRange];
+        const color = COLOR_MAP[activeRange];
         return (
-          <div style={{ background: bg, border: `1px solid ${color}44`, borderRadius: 10, overflow: "hidden" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px 8px", borderBottom: `1px solid ${color}22` }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderLeft: `3px solid ${color}`, borderRadius: 10, overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px 8px", borderBottom: "1px solid var(--border)" }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", flex: 1 }}>{activeRange}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color }}>{items.length} markers</span>
@@ -568,9 +552,9 @@ function OverviewTab() {
           { title: "APS confirmation required", body: "β2-GPI elevated × 3 isotypes at two draws ≥12 weeks apart — meets preliminary APS criteria. IVF history adds urgency. Full confirmation requires rheumatology." },
           { title: "Anti-SSB/La + IVF history", body: "Neonatal lupus risk (congenital heart block) in future pregnancies. Obstetric rheumatology and fetal cardiac monitoring needed before next cycle." },
         ].map(({ title, body }) => (
-          <div key={title} style={{ background: "#fdf0f0", border: "1px solid #f5c0b8", borderLeft: "3px solid var(--red)", borderRadius: 8, padding: "10px 14px" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--red)", marginBottom: 4 }}>{title}</div>
-            <div style={{ fontSize: 11, color: "#8a4040", lineHeight: 1.55 }}>{body}</div>
+          <div key={title} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderLeft: "3px solid var(--red)", borderRadius: 8, padding: "10px 14px" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>{title}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.55 }}>{body}</div>
           </div>
         ))}
       </div>
@@ -719,12 +703,10 @@ function RecIcon({ type, color }: { type: Rec["icon"]; color: string }) {
   return icons[type];
 }
 
-const RECS: Record<RecPriority, { label: string; color: string; bg: string; border: string; items: Rec[] }> = {
+const RECS: Record<RecPriority, { label: string; color: string; items: Rec[] }> = {
   urgent: {
     label: "Address now",
     color: "var(--red)",
-    bg: "#fdf0f0",
-    border: "#f5c0b8",
     items: [
       {
         title: "Confirm Antiphospholipid Syndrome diagnosis",
@@ -764,8 +746,6 @@ const RECS: Record<RecPriority, { label: string; color: string; bg: string; bord
   soon: {
     label: "Within 1–3 months",
     color: "var(--amber)",
-    bg: "#fdf8ee",
-    border: "#f0d89a",
     items: [
       {
         title: "Investigate declining hemoglobin",
@@ -836,8 +816,6 @@ const RECS: Record<RecPriority, { label: string; color: string; bg: string; bord
   ongoing: {
     label: "Maintain & monitor",
     color: "var(--green)",
-    bg: "#f2f8f2",
-    border: "#bde0be",
     items: [
       {
         title: "Continue hydroxychloroquine — confirm dosing",
@@ -925,12 +903,12 @@ const RECS: Record<RecPriority, { label: string; color: string; bg: string; bord
   },
 };
 
-function RecCard({ item, color, bg, border }: { item: Rec; color: string; bg: string; border: string }) {
+function RecCard({ item, color }: { item: Rec; color: string }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div style={{
-      background: bg,
-      border: `1px solid ${border}`,
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
       borderLeft: `3px solid ${color}`,
       borderRadius: 10,
       overflow: "hidden",
@@ -942,25 +920,25 @@ function RecCard({ item, color, bg, border }: { item: Rec; color: string; bg: st
         {/* Top row: icon + tag + source */}
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 9 }}>
           {item.icon && (
-            <span style={{ flexShrink: 0, opacity: 0.8 }}>
-              <RecIcon type={item.icon} color={color} />
+            <span style={{ flexShrink: 0, opacity: 0.55 }}>
+              <RecIcon type={item.icon} color="var(--muted)" />
             </span>
           )}
           {item.tag && (
             <span style={{
               fontSize: 10, padding: "2px 8px", borderRadius: 99,
-              background: color + "18", color, fontWeight: 600, letterSpacing: "0.02em",
+              background: "var(--sage)", color: "var(--muted)", fontWeight: 500, letterSpacing: "0.02em",
             }}>{item.tag}</span>
           )}
           <span style={{ flex: 1 }} />
           {item.source && (
             <span style={{
               fontSize: 10, padding: "2px 8px", borderRadius: 99,
-              background: "var(--surface)", border: `1px solid ${border}`,
+              border: "1px solid var(--border)",
               color: "var(--faint)", fontWeight: 500, whiteSpace: "nowrap",
             }}>{item.source}</span>
           )}
-          <span style={{ fontSize: 11, color, transform: expanded ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block", flexShrink: 0 }}>›</span>
+          <span style={{ fontSize: 11, color: "var(--faint)", transform: expanded ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block", flexShrink: 0 }}>›</span>
         </div>
         {/* Title */}
         <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text)", lineHeight: 1.4, marginBottom: 6 }}>{item.title}</div>
@@ -968,24 +946,24 @@ function RecCard({ item, color, bg, border }: { item: Rec; color: string; bg: st
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, color: "var(--muted)" }}>{item.who}</span>
           <span style={{ fontSize: 10, color: "var(--faint)" }}>·</span>
-          <span style={{ fontSize: 11, color, fontWeight: 600 }}>{item.when}</span>
+          <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{item.when}</span>
         </div>
       </button>
 
       {expanded && (
-        <div style={{ padding: "0 16px 16px 26px", borderTop: `1px solid ${border}` }}>
+        <div style={{ padding: "0 16px 16px 26px", borderTop: "1px solid var(--border)" }}>
           {/* Why */}
           <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.75, margin: "12px 0 16px" }}>{item.why}</p>
 
           {/* Actions */}
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Action items</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Action items</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {item.actions.map((a, i) => (
                 <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
                   <span style={{
                     width: 19, height: 19, borderRadius: "50%",
-                    background: color + "1a", color, fontSize: 10, fontWeight: 700,
+                    background: "var(--sage)", color: "var(--muted)", fontSize: 10, fontWeight: 600,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0, marginTop: 1,
                   }}>{i + 1}</span>
@@ -997,12 +975,12 @@ function RecCard({ item, color, bg, border }: { item: Rec; color: string; bg: st
 
           {/* Supporting findings */}
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Lab evidence</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Lab evidence</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
               {item.findings.map((f, i) => (
                 <span key={i} style={{
                   fontSize: 11, padding: "3px 10px", borderRadius: 99,
-                  background: "var(--surface)", border: `1px solid ${border}`, color: "var(--muted)",
+                  border: "1px solid var(--border)", color: "var(--muted)",
                 }}>{f}</span>
               ))}
             </div>
@@ -1015,11 +993,6 @@ function RecCard({ item, color, bg, border }: { item: Rec; color: string; bg: st
 
 function RecsTab() {
   const m = useIsMobile();
-  const priorityMeta = {
-    urgent:  { color: "var(--red)",   bg: "#fdf0f0", border: "#f5c0b8" },
-    soon:    { color: "var(--amber)", bg: "#fdf8ee", border: "#f0d89a" },
-    ongoing: { color: "var(--green)", bg: "#f2f8f2", border: "#bde0be" },
-  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1027,27 +1000,26 @@ function RecsTab() {
       {/* Visual summary header */}
       <div style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr 1fr" : "1fr 1fr 1fr 2fr", gap: 10 }}>
         {(["urgent", "soon", "ongoing"] as RecPriority[]).map((p) => {
-          const { label, items } = RECS[p];
-          const { color, bg, border } = priorityMeta[p];
+          const { label, color, items } = RECS[p];
           return (
             <div key={p} style={{
-              background: bg, border: `1px solid ${border}`, borderLeft: `3px solid ${color}`,
+              background: "var(--surface)", border: "1px solid var(--border)", borderLeft: `3px solid ${color}`,
               borderRadius: 10, padding: "14px 16px",
             }}>
-              <div style={{ fontSize: 36, fontWeight: 700, color, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+              <div style={{ fontSize: 36, fontWeight: 700, color: "var(--text)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
                 {items.length}
               </div>
-              <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 4 }}>
                 {label}
               </div>
             </div>
           );
         })}
-        {/* Clinical summary — hidden on mobile, only 3 stat boxes show */}
+        {/* Clinical summary — hidden on mobile */}
         {!m && (
-          <div style={{ background: "#f8f4ff", border: "1px solid #d4c8f0", borderLeft: "3px solid #7c5cbf", borderRadius: 10, padding: "14px 16px" }}>
-            <div style={{ fontWeight: 700, fontSize: 12, color: "#5a3ea0", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>Clinical picture — Apr 2026</div>
-            <p style={{ margin: 0, fontSize: 12, color: "#5a4a7a", lineHeight: 1.65 }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderLeft: "3px solid var(--accent)", borderRadius: 10, padding: "14px 16px" }}>
+            <div style={{ fontWeight: 600, fontSize: 12, color: "var(--text)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>Clinical picture — Apr 2026</div>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.65 }}>
               Well-managed but active SLE with secondary APS. Hydroxychloroquine is working — but the disease is not in remission. Priority: formalize APS diagnosis and pre-conception rheumatology care.
             </p>
           </div>
@@ -1055,18 +1027,18 @@ function RecsTab() {
       </div>
 
       {(["urgent", "soon", "ongoing"] as RecPriority[]).map((priority) => {
-        const { label, color, bg, border, items } = RECS[priority];
+        const { label, color, items } = RECS[priority];
         return (
           <div key={priority}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
-              <div style={{ flex: 1, height: 1, background: `${color}33` }} />
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
               <span style={{ fontSize: 11, color: "var(--faint)" }}>{items.length} item{items.length > 1 ? "s" : ""}</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 10 }}>
               {items.map((item) => (
-                <RecCard key={item.title} item={item} color={color} bg={bg} border={border} />
+                <RecCard key={item.title} item={item} color={color} />
               ))}
             </div>
           </div>
@@ -1097,26 +1069,26 @@ interface LifestyleRec {
 
 type LifestyleCategoryId = "Nutrition" | "Movement" | "Photoprotection" | "Mind & Sleep" | "APS Safety";
 
-const LIFESTYLE_CATEGORIES: { id: LifestyleCategoryId; color: string; bg: string; border: string; icon: React.ReactElement }[] = [
+const LIFESTYLE_CATEGORIES: { id: LifestyleCategoryId; color: string; icon: React.ReactElement }[] = [
   {
-    id: "Nutrition", color: "var(--green)", bg: "#f2f8f2", border: "#bde0be",
-    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a4 4 0 0 0-4 4c0 3 2 6 4 8 2-2 4-5 4-8a4 4 0 0 0-4-4z" stroke="var(--green)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 7h4M8 5v4" stroke="var(--green)" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+    id: "Nutrition", color: "var(--green)",
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a4 4 0 0 0-4 4c0 3 2 6 4 8 2-2 4-5 4-8a4 4 0 0 0-4-4z" stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 7h4M8 5v4" stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round"/></svg>,
   },
   {
-    id: "Movement", color: "var(--blue)", bg: "#eef3fb", border: "#b8d0f0",
-    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="9" cy="3.5" r="1.5" stroke="var(--blue)" strokeWidth="1.4"/><path d="M7 6l-2 4h3l1 4M7 6l3 2 2-2" stroke="var(--blue)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    id: "Movement", color: "var(--blue)",
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="9" cy="3.5" r="1.5" stroke="var(--muted)" strokeWidth="1.4"/><path d="M7 6l-2 4h3l1 4M7 6l3 2 2-2" stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   },
   {
-    id: "Photoprotection", color: "var(--amber)", bg: "#fdf8ee", border: "#f0d89a",
-    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="var(--amber)" strokeWidth="1.4"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M11.53 4.47l-1.42 1.42M4.97 11.03l-1.42 1.42" stroke="var(--amber)" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+    id: "Photoprotection", color: "var(--amber)",
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="var(--muted)" strokeWidth="1.4"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M11.53 4.47l-1.42 1.42M4.97 11.03l-1.42 1.42" stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round"/></svg>,
   },
   {
-    id: "Mind & Sleep", color: "var(--accent)", bg: "#f4f7f4", border: "#c4d4c4",
-    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 9A5 5 0 0 1 6 3a5 5 0 1 0 6 6z" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    id: "Mind & Sleep", color: "var(--accent)",
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 9A5 5 0 0 1 6 3a5 5 0 1 0 6 6z" stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   },
   {
-    id: "APS Safety", color: "var(--red)", bg: "#fdf0f0", border: "#f5c0b8",
-    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L3 4.5v4C3 11.5 5.5 14 8 14s5-2.5 5-5.5v-4L8 2z" stroke="var(--red)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 8l1.5 1.5L10 6" stroke="var(--red)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    id: "APS Safety", color: "var(--red)",
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L3 4.5v4C3 11.5 5.5 14 8 14s5-2.5 5-5.5v-4L8 2z" stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 8l1.5 1.5L10 6" stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   },
 ];
 
@@ -1297,8 +1269,8 @@ function LifestyleCard({ item }: { item: LifestyleRec }) {
   const cat = LIFESTYLE_CATEGORIES.find((c) => c.id === item.category)!;
   return (
     <div style={{
-      background: cat.bg,
-      border: `1px solid ${cat.border}`,
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
       borderLeft: `3px solid ${cat.color}`,
       borderRadius: 10,
       overflow: "hidden",
@@ -1309,18 +1281,18 @@ function LifestyleCard({ item }: { item: LifestyleRec }) {
       >
         {/* Top row: icon + category pill + priority badge + chevron */}
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 9 }}>
-          <span style={{ flexShrink: 0, opacity: 0.85 }}>{cat.icon}</span>
+          <span style={{ flexShrink: 0, opacity: 0.6 }}>{cat.icon}</span>
           <span style={{
             fontSize: 10, padding: "2px 8px", borderRadius: 99,
-            background: cat.color + "18", color: cat.color, fontWeight: 600, letterSpacing: "0.02em",
+            background: "var(--sage)", color: "var(--muted)", fontWeight: 500, letterSpacing: "0.02em",
           }}>{item.category}</span>
           <span style={{ flex: 1 }} />
           <span style={{
             fontSize: 10, padding: "2px 8px", borderRadius: 99,
-            background: "var(--surface)", border: `1px solid ${cat.border}`,
-            color: item.priority === "high" ? cat.color : "var(--faint)", fontWeight: 600,
+            border: "1px solid var(--border)",
+            color: "var(--faint)", fontWeight: 500,
           }}>{item.priority === "high" ? "Priority" : "Supportive"}</span>
-          <span style={{ fontSize: 11, color: cat.color, transform: expanded ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block", flexShrink: 0 }}>›</span>
+          <span style={{ fontSize: 11, color: "var(--faint)", transform: expanded ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block", flexShrink: 0 }}>›</span>
         </div>
         {/* Title */}
         <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text)", lineHeight: 1.4, marginBottom: 6 }}>{item.title}</div>
@@ -1329,17 +1301,17 @@ function LifestyleCard({ item }: { item: LifestyleRec }) {
       </button>
 
       {expanded && (
-        <div style={{ padding: "0 16px 16px 26px", borderTop: `1px solid ${cat.border}` }}>
+        <div style={{ padding: "0 16px 16px 26px", borderTop: "1px solid var(--border)" }}>
           <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.75, margin: "12px 0 16px" }}>{item.details}</p>
 
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: cat.color, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>What to do</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>What to do</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {item.actions.map((a, i) => (
                 <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
                   <span style={{
                     width: 19, height: 19, borderRadius: "50%",
-                    background: cat.color + "1a", color: cat.color, fontSize: 10, fontWeight: 700,
+                    background: "var(--sage)", color: "var(--muted)", fontSize: 10, fontWeight: 600,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0, marginTop: 1,
                   }}>{i + 1}</span>
@@ -1351,16 +1323,16 @@ function LifestyleCard({ item }: { item: LifestyleRec }) {
 
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 180 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Research basis</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Research basis</div>
               <p style={{ margin: 0, fontSize: 11, color: "var(--muted)", lineHeight: 1.55, fontStyle: "italic" }}>{item.evidence}</p>
             </div>
             <div style={{ flex: 1, minWidth: 180 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Relevant to this patient</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--faint)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Relevant to this patient</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                 {item.relevance.map((r, i) => (
                   <span key={i} style={{
                     fontSize: 11, padding: "2px 9px", borderRadius: 99,
-                    background: "var(--surface)", border: `1px solid ${cat.border}`, color: "var(--muted)",
+                    border: "1px solid var(--border)", color: "var(--muted)",
                   }}>{r}</span>
                 ))}
               </div>
@@ -1379,23 +1351,23 @@ function LifestyleTab() {
 
       {/* Visual summary header */}
       <div style={{ display: "grid", gridTemplateColumns: m ? "repeat(3, 1fr)" : "repeat(5, 1fr) 2fr", gap: 10 }}>
-        {LIFESTYLE_CATEGORIES.map(({ id, color, bg, border, icon }) => {
+        {LIFESTYLE_CATEGORIES.map(({ id, color, icon }) => {
           const count = LIFESTYLE_RECS.filter((r) => r.category === id).length;
           return (
             <div key={id} style={{
-              background: bg, border: `1px solid ${border}`, borderLeft: `3px solid ${color}`,
+              background: "var(--surface)", border: "1px solid var(--border)", borderLeft: `3px solid ${color}`,
               borderRadius: 10, padding: "12px 14px",
             }}>
-              <div style={{ marginBottom: 6, opacity: 0.8 }}>{icon}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{count}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 4, lineHeight: 1.3 }}>{id}</div>
+              <div style={{ marginBottom: 6, opacity: 0.55 }}>{icon}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "var(--text)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{count}</div>
+              <div style={{ fontSize: 10, fontWeight: 500, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 4, lineHeight: 1.3 }}>{id}</div>
             </div>
           );
         })}
         {/* Callout — hidden on mobile */}
         {!m && (
-          <div style={{ background: "#f4f7f4", border: "1px solid #c4d4c4", borderLeft: "3px solid var(--accent)", borderRadius: 10, padding: "14px 16px" }}>
-            <div style={{ fontWeight: 700, fontSize: 12, color: "var(--accent)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>Evidence-based lifestyle medicine</div>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderLeft: "3px solid var(--accent)", borderRadius: 10, padding: "14px 16px" }}>
+            <div style={{ fontWeight: 600, fontSize: 12, color: "var(--text)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>Evidence-based lifestyle medicine</div>
             <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.65 }}>
               Research-backed interventions for SLE and APS — each citing its primary study or guideline. They complement drug therapy; several directly amplify it.
             </p>
@@ -1409,9 +1381,9 @@ function LifestyleTab() {
         return (
           <div key={id}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{id}</span>
-              <div style={{ flex: 1, height: 1, background: color + "33" }} />
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{id}</span>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
               <span style={{ fontSize: 11, color: "var(--faint)" }}>{items.length} rec{items.length > 1 ? "s" : ""}</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 10 }}>
