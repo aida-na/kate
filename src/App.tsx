@@ -471,233 +471,176 @@ function OverviewTab() {
         </div>
       )}
 
-      {/* Main 2-col */}
-      <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 300px", gap: 14 }}>
+      {/* Lab summary card */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: m ? "14px" : "16px 18px" }}>
 
-        {/* Left */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-
-          {/* Lab summary */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: m ? "14px" : "16px 18px" }}>
-            <div style={{ display: "flex", flexDirection: m ? "column" : "row", gap: m ? 14 : 20, alignItems: "flex-start" }}>
-
-              {/* System health grid */}
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Lab Results Summary
-                  </div>
-                  {/* Compact overall summary — clickable */}
-                  <div style={{ display: "flex", gap: 12, marginLeft: "auto" }}>
-                    {([
-                      { label: "In range"     as RangeKey, pct: 55, color: "var(--green)" },
-                      { label: "Borderline"   as RangeKey, pct: 24, color: "var(--amber)" },
-                      { label: "Out of range" as RangeKey, pct: 21, color: "var(--red)"   },
-                    ]).map(({ label, pct, color }) => {
-                      const active = activeRange === label;
-                      return (
-                        <button
-                          key={label}
-                          onClick={() => selectRange(label)}
-                          style={{
-                            background: "none", border: "none", cursor: "pointer", padding: 0,
-                            display: "flex", alignItems: "center", gap: 5,
-                          }}
-                        >
-                          <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                          <span style={{ fontSize: 12, color: active ? "var(--text)" : "var(--muted)", fontWeight: active ? 700 : 400 }}>{label}</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color }}>{pct}%</span>
-                          <span style={{ fontSize: 10, color: "var(--faint)", transform: active ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block" }}>›</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 5-card system grid */}
-                <SystemHealthGrid />
-              </div>
-
-              {!m && <div style={{ width: 1, background: "var(--border)", alignSelf: "stretch" }} />}
-
-              {/* Treatment */}
-              <div style={{ width: m ? "100%" : 190, flexShrink: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
-                  Treatment Adherence
-                </div>
-                {([
-                  { name: "Hydroxychloroquine", pct: 92, note: "Daily antimalarial and immunomodulator. Reduces autoantibody production, complement consumption, and cardiovascular risk in lupus. Also reduces antiphospholipid antibody levels over time." },
-                  { name: "Escitalopram",        pct: 88, note: "Daily SSRI antidepressant. Relevant to monitoring: SSRIs can cause SIADH (low sodium). Borderline sodium of 135 mmol/L warrants ongoing monitoring." },
-                ] as const).map(({ name, pct, note }) => (
-                  <div key={name} style={{ marginBottom: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <span style={{ fontSize: 12, color: "var(--muted)" }}>{name}</span>
-                        <InfoTooltip text={note} />
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 600 }}>{pct}%</span>
-                    </div>
-                    <SegBar pct={pct} color="var(--accent)" />
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-                      <span style={{ fontSize: 10, color: "var(--faint)" }}>Current</span>
-                      <span style={{ fontSize: 10, color: "var(--faint)" }}>Target</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Header: title + range summary */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Lab Results Summary
           </div>
-
-          {/* Range detail panel — slides in below the gauge card */}
-          {activeRange && (() => {
-            const COLOR_MAP: Record<RangeKey, string> = {
-              "In range": "var(--green)", "Borderline": "var(--amber)", "Out of range": "var(--red)",
-            };
-            const BG_MAP: Record<RangeKey, string> = {
-              "In range": "#eef6ef", "Borderline": "#fdf5ec", "Out of range": "#fdf0f0",
-            };
-            const color = COLOR_MAP[activeRange];
-            const bg = BG_MAP[activeRange];
-            const items = RANGE_DETAILS[activeRange];
-            return (
-              <div style={{ background: bg, border: `1px solid ${color}44`, borderRadius: 10, overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px 8px", borderBottom: `1px solid ${color}22` }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", flex: 1 }}>{activeRange}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color }}>{items.length} markers</span>
-                  <button onClick={() => setActiveRange(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--faint)", fontSize: 14, padding: "0 0 0 6px" }}>✕</button>
-                </div>
-                <div style={{ maxHeight: 220, overflowY: "auto", padding: "8px 14px 10px", display: "flex", flexDirection: "column", gap: 5 }}>
-                  {items.map(({ label, value, system, tooltip }) => (
-                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 10, color: "var(--faint)", width: 88, flexShrink: 0 }}>{system}</span>
-                      <span style={{ fontSize: 12, color: "var(--text)", flex: 1 }}>{label}</span>
-                      <InfoTooltip text={tooltip} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Hemoglobin */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
-              Hemoglobin (g/dL) — 2-Year Trend · Quest + Lahey BILH
-            </div>
-            <ResponsiveContainer width="100%" height={140}>
-              <LineChart data={[
-                { t:"Jun '24",Hgb:12.6},{t:"Dec '24",Hgb:13.1},{t:"Jun '25",Hgb:12.4},
-                { t:"Aug '25",Hgb:12.9},{t:"Mar '26",Hgb:12.0},{t:"Apr '26",Hgb:11.8},
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e8ebe4" />
-                <XAxis dataKey="t" tick={{ fontSize: 11, fill: "var(--muted)" }} />
-                <YAxis domain={[11, 14]} tick={{ fontSize: 11, fill: "var(--muted)" }} width={32} />
-                <Tooltip />
-                <ReferenceLine y={11.7} stroke="var(--red)" strokeDasharray="4 2"
-                  label={{ value: "lower ref 11.7", fontSize: 10, fill: "var(--red)", position: "insideTopLeft" }} />
-                <Line type="monotone" dataKey="Hgb" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3, fill: "var(--accent)" }} />
-              </LineChart>
-            </ResponsiveContainer>
-            <ChartDesc text={CHART_DESC.hemoglobin} />
-          </div>
-
-          {/* C3/C4 + β2-GPI */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
-                Complement C3 & C4 (mg/dL)
-              </div>
-              <ResponsiveContainer width="100%" height={120}>
-                <LineChart data={[
-                  { t:"Sep '25",C3:79,C4:12},{t:"Oct '25",C3:78,C4:11},{t:"Mar '26",C3:75,C4:11},
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e8ebe4" />
-                  <XAxis dataKey="t" tick={{ fontSize: 10, fill: "var(--muted)" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "var(--muted)" }} width={28} />
-                  <Tooltip />
-                  <ReferenceLine y={83} stroke="var(--amber)" strokeDasharray="3 2" />
-                  <ReferenceLine y={15} stroke="var(--red)"   strokeDasharray="3 2" />
-                  <Line type="monotone" dataKey="C3" stroke="var(--blue)"  strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="C4" stroke="var(--amber)" strokeWidth={2} dot={{ r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
-              <ChartDesc text={CHART_DESC.complement} />
-            </div>
-
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
-                β2-GPI Antibodies (U/mL)
-              </div>
-              <ResponsiveContainer width="100%" height={120}>
-                <BarChart data={[
-                  { t:"Oct '25",IgG:32.7,IgM:51.6,IgA:32.9},
-                  { t:"Mar '26",IgG:32.6,IgM:32.1,IgA:30.9},
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e8ebe4" />
-                  <XAxis dataKey="t" tick={{ fontSize: 10, fill: "var(--muted)" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "var(--muted)" }} width={28} />
-                  <Tooltip />
-                  <ReferenceLine y={20} stroke="var(--red)" strokeDasharray="3 2"
-                    label={{ value: "threshold 20", fontSize: 9, fill: "var(--red)" }} />
-                  <Bar dataKey="IgG" fill="var(--blue)"  radius={2} />
-                  <Bar dataKey="IgM" fill="var(--amber)" radius={2} />
-                  <Bar dataKey="IgA" fill="var(--green)" radius={2} />
-                </BarChart>
-              </ResponsiveContainer>
-              <ChartDesc text={CHART_DESC.antibodies} />
-            </div>
+          <div style={{ display: "flex", gap: m ? 8 : 12, marginLeft: "auto", flexWrap: "wrap" }}>
+            {([
+              { label: "In range"     as RangeKey, pct: 55, color: "var(--green)" },
+              { label: "Borderline"   as RangeKey, pct: 24, color: "var(--amber)" },
+              { label: "Out of range" as RangeKey, pct: 21, color: "var(--red)"   },
+            ]).map(({ label, pct, color }) => {
+              const active = activeRange === label;
+              return (
+                <button key={label} onClick={() => selectRange(label)} style={{
+                  background: "none", border: "none", cursor: "pointer", padding: 0,
+                  display: "flex", alignItems: "center", gap: 5,
+                }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, color: active ? "var(--text)" : "var(--muted)", fontWeight: active ? 700 : 400 }}>{label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color }}>{pct}%</span>
+                  <span style={{ fontSize: 10, color: "var(--faint)", transform: active ? "rotate(90deg)" : "none", transition: "transform .15s", display: "inline-block" }}>›</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right — collapsible system groups */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 2px", marginBottom: 4 }}>
-            Marker Status
+        {/* Unified system accordion */}
+        <SystemAccordion />
+
+        {/* Treatment Adherence — compact row below accordion */}
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+            Treatment Adherence
           </div>
-
-          {SYSTEMS.map(({ id, label, alert, alertColor, markers }) => (
-            <div key={id} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
-              <button onClick={() => toggle(id)} style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 8,
-                padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left",
-              }}>
-                <span style={{ fontSize: 12, color: "var(--muted)", transform: open[id] ? "rotate(90deg)" : "rotate(0deg)", transition: "transform .15s", display: "inline-block", width: 14, flexShrink: 0 }}>›</span>
-                <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{label}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, color: `var(--${alertColor})` }}>{alert}</span>
-              </button>
-              {open[id] && (
-                <div style={{ padding: "0 12px 10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
-                  {markers.map(({ label: ml, value, trend, status, note }) => (
-                    <div key={ml} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <StatusDot s={status} />
-                      <span style={{ flex: 1, fontSize: 12, color: "var(--text)", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ml}</span>
-                      <InfoTooltip text={note} />
-                      <span style={{ fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{value}</span>
-                      <span style={{ fontSize: 11, color: STATUS_COLOR[status], flexShrink: 0, width: 22, textAlign: "right" }}>{trend}</span>
-                    </div>
-                  ))}
+          <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 10 }}>
+            {([
+              { name: "Hydroxychloroquine", pct: 92, note: "Daily antimalarial and immunomodulator. Reduces autoantibody production, complement consumption, and cardiovascular risk in lupus. Also reduces antiphospholipid antibody levels over time." },
+              { name: "Escitalopram",        pct: 88, note: "Daily SSRI antidepressant. Relevant to monitoring: SSRIs can cause SIADH (low sodium). Borderline sodium of 135 mmol/L warrants ongoing monitoring." },
+            ] as const).map(({ name, pct, note }) => (
+              <div key={name}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <span style={{ fontSize: 12, color: "var(--muted)" }}>{name}</span>
+                    <InfoTooltip text={note} />
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>{pct}%</span>
                 </div>
-              )}
-            </div>
-          ))}
-
-          {/* Alerts */}
-          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
-            {[
-              { title: "APS confirmation required", body: "β2-GPI elevated × 3 isotypes at two draws ≥12 weeks apart — meets preliminary APS criteria. IVF history adds urgency. Full confirmation requires rheumatology." },
-              { title: "Anti-SSB/La + IVF history", body: "Neonatal lupus risk (congenital heart block) in future pregnancies. Obstetric rheumatology and fetal cardiac monitoring needed before next cycle." },
-            ].map(({ title, body }) => (
-              <div key={title} style={{
-                background: "#fdf0f0", border: "1px solid #f5c0b8",
-                borderRadius: 8, padding: "10px 12px",
-              }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--red)", marginBottom: 4 }}>{title}</div>
-                <div style={{ fontSize: 11, color: "#8a4040", lineHeight: 1.55 }}>{body}</div>
+                <SegBar pct={pct} color="var(--accent)" />
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Range detail panel */}
+      {activeRange && (() => {
+        const COLOR_MAP: Record<RangeKey, string> = {
+          "In range": "var(--green)", "Borderline": "var(--amber)", "Out of range": "var(--red)",
+        };
+        const BG_MAP: Record<RangeKey, string> = {
+          "In range": "#eef6ef", "Borderline": "#fdf5ec", "Out of range": "#fdf0f0",
+        };
+        const color = COLOR_MAP[activeRange];
+        const bg = BG_MAP[activeRange];
+        const items = RANGE_DETAILS[activeRange];
+        return (
+          <div style={{ background: bg, border: `1px solid ${color}44`, borderRadius: 10, overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px 8px", borderBottom: `1px solid ${color}22` }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", flex: 1 }}>{activeRange}</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color }}>{items.length} markers</span>
+              <button onClick={() => setActiveRange(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--faint)", fontSize: 14, padding: "0 0 0 6px" }}>✕</button>
+            </div>
+            <div style={{ maxHeight: 220, overflowY: "auto", padding: "8px 14px 10px", display: "flex", flexDirection: "column", gap: 5 }}>
+              {items.map(({ label, value, system, tooltip }) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 10, color: "var(--faint)", width: 88, flexShrink: 0 }}>{system}</span>
+                  <span style={{ fontSize: 12, color: "var(--text)", flex: 1 }}>{label}</span>
+                  <InfoTooltip text={tooltip} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Alert cards */}
+      <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 10 }}>
+        {[
+          { title: "APS confirmation required", body: "β2-GPI elevated × 3 isotypes at two draws ≥12 weeks apart — meets preliminary APS criteria. IVF history adds urgency. Full confirmation requires rheumatology." },
+          { title: "Anti-SSB/La + IVF history", body: "Neonatal lupus risk (congenital heart block) in future pregnancies. Obstetric rheumatology and fetal cardiac monitoring needed before next cycle." },
+        ].map(({ title, body }) => (
+          <div key={title} style={{ background: "#fdf0f0", border: "1px solid #f5c0b8", borderLeft: "3px solid var(--red)", borderRadius: 8, padding: "10px 14px" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--red)", marginBottom: 4 }}>{title}</div>
+            <div style={{ fontSize: 11, color: "#8a4040", lineHeight: 1.55 }}>{body}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Hemoglobin */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+          Hemoglobin (g/dL) — 2-Year Trend · Quest + Lahey BILH
+        </div>
+        <ResponsiveContainer width="100%" height={140}>
+          <LineChart data={[
+            { t:"Jun '24",Hgb:12.6},{t:"Dec '24",Hgb:13.1},{t:"Jun '25",Hgb:12.4},
+            { t:"Aug '25",Hgb:12.9},{t:"Mar '26",Hgb:12.0},{t:"Apr '26",Hgb:11.8},
+          ]}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e8ebe4" />
+            <XAxis dataKey="t" tick={{ fontSize: 11, fill: "var(--muted)" }} />
+            <YAxis domain={[11, 14]} tick={{ fontSize: 11, fill: "var(--muted)" }} width={32} />
+            <Tooltip />
+            <ReferenceLine y={11.7} stroke="var(--red)" strokeDasharray="4 2"
+              label={{ value: "lower ref 11.7", fontSize: 10, fill: "var(--red)", position: "insideTopLeft" }} />
+            <Line type="monotone" dataKey="Hgb" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3, fill: "var(--accent)" }} />
+          </LineChart>
+        </ResponsiveContainer>
+        <ChartDesc text={CHART_DESC.hemoglobin} />
+      </div>
+
+      {/* C3/C4 + β2-GPI */}
+      <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 14 }}>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+            Complement C3 & C4 (mg/dL)
+          </div>
+          <ResponsiveContainer width="100%" height={120}>
+            <LineChart data={[
+              { t:"Sep '25",C3:79,C4:12},{t:"Oct '25",C3:78,C4:11},{t:"Mar '26",C3:75,C4:11},
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e8ebe4" />
+              <XAxis dataKey="t" tick={{ fontSize: 10, fill: "var(--muted)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--muted)" }} width={28} />
+              <Tooltip />
+              <ReferenceLine y={83} stroke="var(--amber)" strokeDasharray="3 2" />
+              <ReferenceLine y={15} stroke="var(--red)"   strokeDasharray="3 2" />
+              <Line type="monotone" dataKey="C3" stroke="var(--blue)"  strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="C4" stroke="var(--amber)" strokeWidth={2} dot={{ r: 3 }} />
+            </LineChart>
+          </ResponsiveContainer>
+          <ChartDesc text={CHART_DESC.complement} />
+        </div>
+
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+            β2-GPI Antibodies (U/mL)
+          </div>
+          <ResponsiveContainer width="100%" height={120}>
+            <BarChart data={[
+              { t:"Oct '25",IgG:32.7,IgM:51.6,IgA:32.9},
+              { t:"Mar '26",IgG:32.6,IgM:32.1,IgA:30.9},
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e8ebe4" />
+              <XAxis dataKey="t" tick={{ fontSize: 10, fill: "var(--muted)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--muted)" }} width={28} />
+              <Tooltip />
+              <ReferenceLine y={20} stroke="var(--red)" strokeDasharray="3 2"
+                label={{ value: "threshold 20", fontSize: 9, fill: "var(--red)" }} />
+              <Bar dataKey="IgG" fill="var(--blue)"  radius={2} />
+              <Bar dataKey="IgM" fill="var(--amber)" radius={2} />
+              <Bar dataKey="IgA" fill="var(--green)" radius={2} />
+            </BarChart>
+          </ResponsiveContainer>
+          <ChartDesc text={CHART_DESC.antibodies} />
         </div>
       </div>
     </div>
